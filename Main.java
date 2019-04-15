@@ -9,11 +9,11 @@ public class Main {
 
     public static int ACC = 0;
     public static int IP = 0;
-    public static elem_t[] Vars;
+    public static ArrayList<elem_t> Vars = new ArrayList<>();
     public static int NumVars = 0;
-    public static elem_t[] Labels;
+    public static ArrayList<elem_t> Labels = new ArrayList<>();
     public static int NumLabels = 0;
-    public static instruct_t[] instructs;
+    public static ArrayList<instruct_t> Instructs = new ArrayList<>();
     public static int NumInstructs = 0;
     public static int NumNumbers = 0;
 
@@ -22,34 +22,35 @@ public class Main {
         System.exit(0);
     }
     public static void ADD(int a, int b){
-        ACC+=Vars[a].val;
+        ACC+=Vars.get(a).getVal();
     }
     public static void SUB(int a, int b){
-        ACC-=Vars[a].val;
+        ACC-=Vars.get(a).getVal();
     }
     public static void MULT(int a, int b){
-        ACC*=Vars[a].val;
+        ACC*=Vars.get(a).getVal();
     }
     public static void DIV(int a, int b){
-        ACC/=Vars[a].val;
+        ACC/=Vars.get(a).getVal();
     }
     public static void LOAD(int a, int b){
-        ACC=Vars[a].val;
+        ACC=Vars.get(a).getVal();
     }
     public static void STORE(int a, int b){
-        Vars[a].val=ACC;
+        Vars.get(a).setVal(ACC);
     }
     public static void COPY(int a, int b){
-        Vars[a].val = Vars[b].val;
+        Vars.get(a).setVal(Vars.get(b).getVal());
     }
     public static void READ(int a, int b){
         System.out.println("Give number: ");
         Scanner in = new Scanner(System.in);
-        Vars[a].val = in.nextInt();
+        int num =in.nextInt();
+        Vars.get(a).setVal(num);
         in.close();
     }
     public static void WRITE(int a,int b){
-        System.out.println("Number is" + Vars[a].val);
+        System.out.println("Number is" + Vars.get(a).getVal());
     }
     public static void STOP(int a, int b){
         System.exit(0);
@@ -58,31 +59,31 @@ public class Main {
         return;
     }
     public static void BR(int a, int b){
-        IP=Labels[a].val-1;
+        IP=Labels.get(a).getVal()-1;
     }
     public static void BRNEG(int a, int b){
         if(ACC < 0){
-            IP=Labels[a].val-1;
+            IP=Labels.get(a).getVal()-1;
         }
     }
     public static void BRZNEG(int a, int b){
         if(ACC<=0){
-            IP=Labels[a].val-1;
+            IP=Labels.get(a).getVal()-1;
         }
     }
     public static void BRPOS(int a, int b){
         if(ACC > 0){
-            IP=Labels[a].val-1;
+            IP=Labels.get(a).getVal()-1;
         }
     }
     public static void BRZPOS(int a, int b){
         if(ACC >= 0){
-            IP=Labels[a].val-1;
+            IP=Labels.get(a).getVal()-1;
         }
     }
     public static void BRZERO(int a, int b){
         if(ACC==0){
-            IP=Labels[a].val-1;
+            IP=Labels.get(a).getVal()-1;
         }
     }
     public static void PUSH(int a, int b){
@@ -99,7 +100,7 @@ public class Main {
     }
     public static void STACKW(int a, int b){
         int loc;
-        loc = stack.getTos() - Vars[a].val;
+        loc = stack.getTos() - Vars.get(a).getVal();
         if(loc < 0 || loc > stack.getTos()){
             error("Stack write error");
         }
@@ -107,7 +108,7 @@ public class Main {
     }
     public static void STACKR(int a, int b){
         int loc;
-        loc = stack.getTos() - Vars[a].val;
+        loc = stack.getTos() - Vars.get(a).getVal();
         if(loc < 0 || loc > stack.getTos()){
             error("Stack read error");
         }
@@ -192,15 +193,147 @@ public class Main {
             }
             input.add(line);
         }
-        pass1(input);
+       // pass1(input);
         //For test pass1
         //System.out.println("NumLabels: " + NumLabels + " NumNumbers: " + NumNumbers + " NumVars: " + NumVars + " NumInstructs: " + NumInstructs);
-        Vars = new elem_t[NumVars+NumNumbers];
+        /*Vars = new elem_t[NumVars+NumNumbers];//counts labels,numbers,instructions, and variables
         Labels = new elem_t[NumLabels];
-        instructs = new instruct_t[NumInstructs];
+        instructs = new instruct_t[NumInstructs];*/
+        pass2(input);//writes variables and labels
+        //For testing pass2
+        System.out.println("Labels: " + Labels.toString());
+        System.out.println("Variables: " + Vars.toString());
+        pass3(input);
+
     }
 
-    public static void pass1(ArrayList<String> input){
+    public static int findInTable(ArrayList<elem_t> table, String name){
+        for(int i = 0; i < table.size(); i++){
+            if(table.get(i).getName().equals(name)){
+                return i;
+            }
+        }
+        return -1;
+    }
+
+
+    public static void pass3(ArrayList<String> input){
+        int numInstructs = 0, instruct, label;
+        String line;
+        for(int i = 0; i < input.size(); i++){
+            if(nothing(input.get(i)) == 1){continue;}
+            int index = -1;
+            index = input.get(i).indexOf(":");
+            if(index > 0){
+                index++;//Move index after label
+                line = input.get(i).substring(index).trim();
+            }else {
+                line = input.get(i);
+            }
+            String[] tokens = line.split(" ");
+            for(int k = 0; k < tokens.length; k++){
+                instruct = inReserved(tokens[k]);
+                if(instruct >= 0){
+                    instruct_t ins = new instruct_t();
+                    Instructs.add(ins);
+                    Instructs.get(numInstructs).setFunctionName(InstructInfo[numInstructs].getFunctionName());
+                    for(int m = 0; m < InstructInfo[instruct].numArgs; m++){
+                        if(k + 1 < tokens.length) {
+                            k++;
+                            if(instruct >=11 && instruct <= 16){//BR's
+                                label = findInTable(Labels,tokens[k]);
+                                if(label < 0){
+                                    error("BRs must be followed by defined labels");
+                                }
+                                Instructs.get(numInstructs).setArg(m,label);
+                            }else{
+                                    label = findInTable(Vars, tokens[k]);
+                                    if(label < 0){
+                                        error("Unknown argument");
+                                    }
+                                    Instructs.get(numInstructs).setArg(m,label);
+                            }
+                        }
+                    }
+                    numInstructs++;
+                }
+            }
+        }
+    }
+
+    public static void pass2(ArrayList<String> input){
+        int numLabels = 0, numVarsNumbers = 0, numInstructs = 0, instruct = -1;
+        String name = null, line;
+        for(int i = 0; i < input.size(); i++){
+            if(nothing(input.get(i)) == 1){continue;};
+            int index = -1;
+            index = input.get(i).indexOf(":");
+            if(index > 0){
+                elem_t Label = new elem_t();
+                Labels.add(Label);
+                name = input.get(i);
+                name = name.substring(0,index);
+                Labels.get(numLabels).setName(name);
+                Labels.get(numLabels).setVal(numInstructs);
+                numLabels++;
+                index++;
+                line = input.get(i).substring(index).trim();
+            }else{
+                line = input.get(i);
+            }
+
+            String[] tokens = line.split(" ");
+            for(int k = 0; k < tokens.length; k++){
+                if(nothing(tokens[k]) == 1){
+                    continue;
+                }
+                instruct = inReserved(tokens[k]);
+                if(instruct < 0){
+                    elem_t var = new elem_t();
+                    Vars.add(var);
+                    Vars.get(numVarsNumbers).setName(tokens[k]);
+                    for(int m = 0; m < numVarsNumbers; m++){
+                        if(Vars.get(m).getName() == tokens[k]){
+                            error("Multiply Defined Variable\n");
+                        }
+                    }
+                    if(k + 1 < tokens.length) {
+                        k++;
+                        if(tokens[k] == null || isNumber(tokens[k]) == 0){
+                            error("Variable name must be followed by integer");
+                        }
+                        Vars.get(numVarsNumbers).setVal(Integer.parseInt(tokens[k]));
+                    }
+                    if(k + 1 < tokens.length) {
+                        k++;
+                        if(nothing(tokens[k]) == 0){
+                            error("Left over on variable definition line");
+                        }
+                    }
+                    numVarsNumbers++;
+                }else{//instruction
+                    for(int m = 0; m < InstructInfo[instruct].numArgs; m++){
+                        if(k + 1 < tokens.length) {
+                            k++;
+                            if((tokens[k] == null) || (InstructInfo[instruct].useImmediate == 0 && isNumber(tokens[k]) == 0)){
+                                error("Invalid argument");
+                            }if(isNumber(tokens[k]) == 1){
+                                elem_t var = new elem_t();
+                                Vars.add(var);
+                                Vars.get(numVarsNumbers).setName(tokens[k]);
+                                Vars.get(numVarsNumbers).setVal(Integer.parseInt(tokens[k]));
+                                numVarsNumbers++;
+                            }
+                        }
+                    }
+                    numInstructs++;
+                }
+
+            }
+        }
+    }
+
+   /* public static void pass1(ArrayList<String> input){
         String line;
         int instruct = -1;
         for(int i = 0; i < input.size(); i++){
@@ -242,5 +375,5 @@ public class Main {
                 }
             }
         }
-    }
+    }*/
 }
