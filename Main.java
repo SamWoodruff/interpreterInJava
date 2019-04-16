@@ -204,6 +204,7 @@ public class Main {
         System.out.println("Labels: " + Labels.toString());
         System.out.println("Variables: " + Vars.toString());
         pass3(input);
+        System.out.println("Instructions: " + Instructs.toString());
 
     }
 
@@ -236,7 +237,7 @@ public class Main {
                 if(instruct >= 0){
                     instruct_t ins = new instruct_t();
                     Instructs.add(ins);
-                    Instructs.get(numInstructs).setFunctionName(InstructInfo[numInstructs].getFunctionName());
+                    Instructs.get(numInstructs).setFunctionName(InstructInfo[instruct].getFunctionName());
                     for(int m = 0; m < InstructInfo[instruct].numArgs; m++){
                         if(k + 1 < tokens.length) {
                             k++;
@@ -245,13 +246,13 @@ public class Main {
                                 if(label < 0){
                                     error("BRs must be followed by defined labels");
                                 }
-                                Instructs.get(numInstructs).setArg(m,label);
+                                Instructs.get(numInstructs).setArg(m, label);
                             }else{
-                                    label = findInTable(Vars, tokens[k]);
-                                    if(label < 0){
-                                        error("Unknown argument");
-                                    }
-                                    Instructs.get(numInstructs).setArg(m,label);
+                                label = findInTable(Vars, tokens[k]);
+                                if(label < 0){
+                                    error("Unknown argument");
+                                }
+                                Instructs.get(numInstructs).setArg(m,Vars.get(label).getVal());
                             }
                         }
                     }
@@ -330,52 +331,7 @@ public class Main {
                     }
                     numInstructs++;
                 }
-
             }
         }
     }
-
-   /* public static void pass1(ArrayList<String> input){
-        String line;
-        int instruct = -1;
-        for(int i = 0; i < input.size(); i++){
-            if(nothing(input.get(i)) == 1){
-                continue;
-            }
-            int index = -1;
-            index = input.get(i).indexOf(":");
-            if(index > 0){
-                NumLabels++;
-                index++;//Move index after label
-                line = input.get(i).substring(index).trim();
-            }else {
-                line = input.get(i);
-            }
-
-            String[] tokens = line.split(" ");
-            for(int k = 0; k < tokens.length; k++){
-                if(nothing(tokens[k]) == 1){
-                    continue;
-                }
-                instruct = inReserved(tokens[k]);
-                if(instruct >= 0){
-                    NumInstructs++;
-                    if(InstructInfo[instruct].useImmediate == 1){
-                        if(isNumber(tokens[k+1]) == 1) {
-                            NumNumbers++;
-                            break;
-                        }else{
-                            break;
-                        }
-                    }else{
-                        break;
-                    }
-                }else if(isNumber(tokens[k]) == 0){
-                    NumVars++;
-                    System.out.println(tokens[k]);
-                    break;
-                }
-            }
-        }
-    }*/
 }

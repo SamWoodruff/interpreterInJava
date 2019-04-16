@@ -1,11 +1,21 @@
 package classes;
 
+import java.util.Arrays;
+
 public class instruct_t {
     private int[] args = new int[2];
     private String functionName;
 
     public void setFunctionName(String functionName) {
         this.functionName = functionName;
+    }
+
+    @Override
+    public String toString() {
+        return "instruct_t{" +
+                "args=" + Arrays.toString(args) +
+                ", functionName='" + functionName + '\'' +
+                '}';
     }
 
     public String getFunctionName() {
