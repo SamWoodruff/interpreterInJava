@@ -45,7 +45,7 @@ public class Main {
     public static void READ(int a, int b){
         System.out.println("Give number: ");
         Scanner in = new Scanner(System.in);
-        int num =in.nextInt();
+        int num = in.nextInt();
         Vars.get(a).setVal(num);
         in.close();
     }
@@ -315,9 +315,11 @@ public class Main {
                     for(int m = 0; m < InstructInfo[instruct].numArgs; m++){
                         if(k + 1 < tokens.length) {
                             k++;
-                            if((tokens[k] == null) || (InstructInfo[instruct].useImmediate == 0 && isNumber(tokens[k]) == 0)){
-                                error("Invalid argument");
-                            }if(isNumber(tokens[k]) == 1){
+                            if((tokens[k] == null) || (InstructInfo[instruct].useImmediate == 0 && isNumber(tokens[k]) == 1)){
+
+                                    error("Invalid argument");
+                            }
+                            if(isNumber(tokens[k]) == 1){
                                 elem_t var = new elem_t();
                                 Vars.add(var);
                                 Vars.get(numVarsNumbers).setName(tokens[k]);
